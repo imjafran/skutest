@@ -186,26 +186,137 @@ class GenerateSku
 // Attribute sets (example data)
 $attributes = [
     [
+        "name" => "Size",
+        "enabled" => true,
+        "required" => true,
+        "values" => [
+            ["value" => "3030", "price" => "1320"],
+            ["value" => "3036", "price" => "1320"],
+            ["value" => "3048", "price" => "1430"],
+            ["value" => "3630", "price" => "1430"],
+            ["value" => "3636", "price" => "1430"],
+            ["value" => "3648", "price" => "1460"],
+            ["value" => "4230", "price" => "1485"],
+            ["value" => "4236", "price" => "1485"],
+            ["value" => "4248", "price" => "1570"],
+            ["value" => "4830", "price" => "1570"],
+            ["value" => "4836", "price" => "1570"],
+            ["value" => "4848", "price" => "1705"],
+            ["value" => "5430", "price" => "1705"],
+            ["value" => "5436", "price" => "1705"],
+            ["value" => "5448", "price" => "1815"],
+            ["value" => "6030", "price" => "1870"],
+            ["value" => "6036", "price" => "1870"],
+            ["value" => "6048", "price" => "1925"]
+        ],
+    ],
+    [
         "name" => "Color",
         "enabled" => true,
         "required" => true,
         "values" => [
-            ["value" => "red", "price" => 10],
-            ["value" => "yellow", "price" => 15],
-            ["value" => "green", "price" => 20]
-        ]
+            ["value" => "Raw", "price" => 0],
+            ["value" => "AMW", "price" => "300"],
+            ["value" => "ANW", "price" => "200"],
+            ["value" => "BLK", "price" => "300"],
+            ["value" => "NAV", "price" => "300"],
+            ["value" => "CHO", "price" => "300"],
+            ["value" => "ESP", "price" => "300"],
+            ["value" => "GRY", "price" => "200"],
+            ["value" => "LGRY", "price" => "200"],
+            ["value" => "PRM", "price" => "100"],
+            ["value" => "SAD", "price" => "300"],
+            ["value" => "SGRY", "price" => "300"],
+            ["value" => "WHT", "price" => "200"]
+        ],
     ],
     [
-        "name" => "Size",
+        "name" => "Trim",
         "enabled" => true,
-        "required" => false,  // This is now a required attribute
+        "required" => true,
         "values" => [
-            ["value" => "XS", "price" => 5],
-            ["value" => "SM", "price" => 10],
-            ["value" => "MD", "price" => 15]
-        ]
+            ["value" => "CLT", "price" => 0],
+            ["value" => "FLT", "price" => 0],
+            ["value" => "BLT", "price" => 0]
+        ],
+    ],
+    [
+        "name" => "Trim Install",
+        "enabled" => true,
+        "required" => true,
+        "values" => [
+            ["value" => "INT", "price" => 0],
+            ["value" => "TRM", "price" => 0],
+            ["value" => "STR", "price" => 0]
+        ],
+    ],
+    [
+        "name" => "Crown Molding",
+        "enabled" => true,
+        "required" => true,
+        "values" => [
+            ["value" => "NCR", "price" => 0],
+            ["value" => "INC", "price" => "280"],
+            ["value" => "CLS", "price" => "210"]
+        ],
+    ],
+    [
+        "name" => "Depth",
+        "enabled" => true,
+        "required" => true,
+        "values" => [
+            ["value" => "18", "price" => 0],
+            ["value" => "ID19", "price" => "280"],
+            ["value" => "ID20", "price" => "280"],
+            ["value" => "ID22", "price" => "420"]
+        ],
+    ],
+    [
+        "name" => "Reduced Height",
+        "enabled" => true,
+        "required" => true,
+        "values" => [
+            ["value" => "NRH", "price" => 0],
+            ["value" => "RH1", "price" => "175"],
+            ["value" => "RH2", "price" => "175"],
+            ["value" => "RH3", "price" => "175"],
+            ["value" => "RH4", "price" => "175"],
+            ["value" => "RH5", "price" => "175"],
+            ["value" => "RH6", "price" => "175"]
+        ],
+    ],
+    [
+        "name" => "Chimney Extension",
+        "enabled" => true,
+        "required" => true,
+        "values" => [
+            ["value" => "NET", "price" => 0],
+            ["value" => "6ET", "price" => "245"],
+            ["value" => "12ET", "price" => "308"],
+            ["value" => "24ET", "price" => "350"]
+        ],
+    ],
+    [
+        "name" => "Solid Bottom",
+        "enabled" => true,
+        "required" => true,
+        "values" => [
+            ["value" => "NSB", "price" => 0],
+            ["value" => "YSB", "price" => "280"]
+        ],
+    ],
+    [
+        "name" => "Rushed",
+        "enabled" => true,
+        "required" => true,
+        "values" => [
+            ["value" => "NRSH", "price" => 0],
+            ["value" => "RSH", "price" => "350"]
+        ],
     ]
 ];
+
+
 
 // Extract enabled attributes and their values
 $sets = [];
