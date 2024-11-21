@@ -4,10 +4,24 @@ class GenerateSku
 {
     private $attributes;
     private $rootNode;
+    public $options;
 
     public function __construct($attributes)
     {
         $this->attributes = $attributes;
+        $this->options = [
+            'prefixName' => 'Test',
+            'separator' => '-',
+            'price' => true,
+            'basePrice' => 0,
+            'vat' => false,
+            'vatType' => 'percentage',
+            'vatAmount' => 20,
+            'discount' => false,
+            'discountType' => 'percentage',
+            'discountAmount' => 10,
+            'uppercase' => true,
+        ];
         $this->rootNode = 'Test-';
     }
 
@@ -16,7 +30,7 @@ class GenerateSku
         unset($this->attributes);
     }
 
-    // Generate combinations recursively considering required attributes
+    // Generate combinations recursively considering required attributes and calculating price
     public function generateCombinations($sets, $requiredSets)
     {
         if (empty($sets)) {
@@ -30,7 +44,9 @@ class GenerateSku
                 foreach ($this->cartesianProduct($subset) as $combination) {
                     // Ensure required attributes are included in every combination
                     if ($this->containsRequiredAttributes($combination, $requiredSets)) {
-                        yield $this->rootNode . implode('-', $combination);
+                        // Calculate price of the combination
+                        $price = $this->calculatePrice($combination);
+                        yield [$this->rootNode . implode( $this->options['separator'], $combination), $price];
                     }
                 }
             }
@@ -113,6 +129,23 @@ class GenerateSku
         return $result;
     }
 
+    // Calculate the price of the SKU based on the selected values
+    private function calculatePrice($combination)
+    {
+        $totalPrice = $this->options['basePrice'];
+        foreach ($combination as $value) {
+            // Find the price for the value in the corresponding attribute set
+            foreach ($this->attributes as $attribute) {
+                foreach ($attribute['values'] as $attributeValue) {
+                    if ($attributeValue['value'] === $value && isset($attributeValue['price'])) {
+                        $totalPrice += $attributeValue['price'];
+                    }
+                }
+            }
+        }
+        return $totalPrice;
+    }
+
     // Get memory usage in MB
     public function getMemoryUsage()
     {
@@ -127,19 +160,19 @@ $attributes = [
         "enabled" => true,
         "required" => true,
         "values" => [
-            ["value" => "red", "price" => 0],
-            ["value" => "yellow", "price" => 0],
-            ["value" => "green", "price" => 0]
+            ["value" => "red", "price" => 10],
+            ["value" => "yellow", "price" => 15],
+            ["value" => "green", "price" => 20]
         ]
     ],
     [
         "name" => "Size",
         "enabled" => true,
-        "required" => true,  // This is now a required attribute
+        "required" => false,  // This is now a required attribute
         "values" => [
-            ["value" => "XS", "price" => 0],
-            ["value" => "SM", "price" => 0],
-            ["value" => "MD", "price" => 0]
+            ["value" => "XS", "price" => 5],
+            ["value" => "SM", "price" => 10],
+            ["value" => "MD", "price" => 15]
         ]
     ]
 ];
@@ -174,8 +207,10 @@ if (!$file) {
 $skuGenerator = new GenerateSku($attributes);
 foreach ($skuGenerator->generateCombinations($sets, $requiredSets) as $combination) {
     $currentTime = date("Y-m-d H:i:s");
+    $sku = $skuGenerator->options['uppercase'] ? strtoupper($combination[0]) : strtolower($combination[0]);
+    $price = $combination[1];
     $memoryUsage = $skuGenerator->getMemoryUsage();
-    $logEntry = "$currentTime | $combination | $memoryUsage" . PHP_EOL;
+    $logEntry = "$currentTime | $sku | Price: $price | $memoryUsage" . PHP_EOL;
 
     fwrite($file, $logEntry);
 
