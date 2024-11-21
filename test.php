@@ -3,36 +3,56 @@
 class GenerateSku
 {
     private $attributes;
-    private $options;
     private $rootNode;
 
-    public function __construct($attributes = [], $options = [])
+    public function __construct($attributes)
     {
         $this->attributes = $attributes;
-        $this->options = $options;
         $this->rootNode = 'Test-';
     }
 
     public function __destruct()
     {
-        unset($this->attributes, $this->options);
+        unset($this->attributes);
     }
 
-    // Generate combinations recursively
-    public function generateCombinations($sets)
+    // Generate combinations recursively considering required attributes
+    public function generateCombinations($sets, $requiredSets)
     {
         if (empty($sets)) {
             yield $this->rootNode;
             return;
         }
 
+        // Handle combinations
         for ($subsetSize = 1; $subsetSize <= count($sets); $subsetSize++) {
             foreach ($this->getSubsets($sets, $subsetSize) as $subset) {
                 foreach ($this->cartesianProduct($subset) as $combination) {
-                    yield $this->rootNode . implode('-', $combination);
+                    // Ensure required attributes are included in every combination
+                    if ($this->containsRequiredAttributes($combination, $requiredSets)) {
+                        yield $this->rootNode . implode('-', $combination);
+                    }
                 }
             }
         }
+    }
+
+    // Check if combination contains all required attributes
+    private function containsRequiredAttributes($combination, $requiredSets)
+    {
+        foreach ($requiredSets as $requiredSet) {
+            $found = false;
+            foreach ($combination as $item) {
+                if (in_array($item, $requiredSet)) {
+                    $found = true;
+                    break;
+                }
+            }
+            if (!$found) {
+                return false; // If any required set is missing, return false
+            }
+        }
+        return true; // All required attributes are found in the combination
     }
 
     // Generate all subsets of a given size
@@ -96,30 +116,54 @@ class GenerateSku
     // Get memory usage in MB
     public function getMemoryUsage()
     {
-        // return round(memory_get_usage(true) / 1024 / 1024, 2) . " MB";
-
-        // Return pick memory usage in MB.
         return round(memory_get_peak_usage(true) / 1024 / 1024, 2) . " MB";
     }
 }
 
-// Data (same as Python example)
-$sets = [
-    ['Size330', 'Size336', 'Size348', 'Size3630', 'Size3636', 'Size3648', 'Size4230', 'Size4236', 'Size4248', 'Size4830', 'Size4836', 'Size4848', 'Size5430', 'Size5436', 'Size5448', 'Size6030', 'Size6036', 'Size6048'],
-    ['ColorAMW', 'ColorBLK', 'ColorNAV', 'ColorPRM', 'ColorANW', 'ColorCHO', 'ColorESP', 'ColorGRY', 'ColorLGRY', 'ColorSAD', 'ColorSGRY', 'ColorWHT'],
-    ['TrimCLT', 'TrimFLT', 'TrimBLT'],
-    ['Trim InstallINT', 'Trim InstallTRM', 'Trim InstallSTR'],
-    ['Crown MoldingNCR', 'Crown MoldingINC', 'Crown MoldingCLS'],
-    ['DepthID19', 'DepthID20', 'DepthID22'],
-    ['Reduced HeightRH1', 'Reduced HeightRH2', 'Reduced HeightRH3', 'Reduced HeightRH4', 'Reduced HeightRH5', 'Reduced HeightRH6'],
-    ['Chimney Extension6ET', 'Chimney Extension12ET', 'Chimney Extension24ET'],
-    ['Solid BottomYSB'],
-    ['RushedRSH']
+// Attribute sets (example data)
+$attributes = [
+    [
+        "name" => "Color",
+        "enabled" => true,
+        "required" => true,
+        "values" => [
+            ["value" => "red", "price" => 0],
+            ["value" => "yellow", "price" => 0],
+            ["value" => "green", "price" => 0]
+        ]
+    ],
+    [
+        "name" => "Size",
+        "enabled" => true,
+        "required" => true,  // This is now a required attribute
+        "values" => [
+            ["value" => "XS", "price" => 0],
+            ["value" => "SM", "price" => 0],
+            ["value" => "MD", "price" => 0]
+        ]
+    ]
 ];
+
+// Extract enabled attributes and their values
+$sets = [];
+$requiredSets = [];
+foreach ($attributes as $attribute) {
+    if ($attribute['enabled']) {
+        $values = array_column($attribute['values'], 'value'); // Extract 'value'
+        if (!empty($values)) {
+            $sets[] = $values;
+
+            // Handle required attributes
+            if ($attribute['required']) {
+                $requiredSets[] = $values;
+            }
+        }
+    }
+}
 
 // File setup
 $timestamp = date("Ymd_His");
-$filename = "php-combinations_$timestamp.txt";
+$filename = "combinations.txt";
 $file = fopen($filename, 'w');
 
 if (!$file) {
@@ -127,8 +171,8 @@ if (!$file) {
 }
 
 // Generate combinations and write to file
-$skuGenerator = new GenerateSku();
-foreach ($skuGenerator->generateCombinations($sets) as $combination) {
+$skuGenerator = new GenerateSku($attributes);
+foreach ($skuGenerator->generateCombinations($sets, $requiredSets) as $combination) {
     $currentTime = date("Y-m-d H:i:s");
     $memoryUsage = $skuGenerator->getMemoryUsage();
     $logEntry = "$currentTime | $combination | $memoryUsage" . PHP_EOL;
