@@ -3,7 +3,6 @@
 class GenerateSku
 {
     private $attributes;
-    private $rootNode;
     public $options;
 
     public function __construct($attributes)
@@ -14,15 +13,14 @@ class GenerateSku
             'separator' => '-',
             'price' => true,
             'basePrice' => 0,
-            'vat' => false,
+            'vat' => true,
             'vatType' => 'percentage',
-            'vatAmount' => 20,
+            'vatAmount' => 50,
             'discount' => false,
             'discountType' => 'percentage',
             'discountAmount' => 10,
             'uppercase' => true,
         ];
-        $this->rootNode = 'Test-';
     }
 
     public function __destruct()
@@ -34,7 +32,7 @@ class GenerateSku
     public function generateCombinations($sets, $requiredSets)
     {
         if (empty($sets)) {
-            yield $this->rootNode;
+            yield $this->options['prefixName'];
             return;
         }
 
@@ -46,7 +44,7 @@ class GenerateSku
                     if ($this->containsRequiredAttributes($combination, $requiredSets)) {
                         // Calculate price of the combination
                         $price = $this->calculatePrice($combination);
-                        yield [$this->rootNode . implode( $this->options['separator'], $combination), $price];
+                        yield [ $this->options['prefixName'] . $this->options['separator'] . implode( $this->options['separator'], $combination), $price];
                     }
                 }
             }
@@ -129,22 +127,54 @@ class GenerateSku
         return $result;
     }
 
-    // Calculate the price of the SKU based on the selected values
-    private function calculatePrice($combination)
-    {
-        $totalPrice = $this->options['basePrice'];
-        foreach ($combination as $value) {
-            // Find the price for the value in the corresponding attribute set
-            foreach ($this->attributes as $attribute) {
-                foreach ($attribute['values'] as $attributeValue) {
-                    if ($attributeValue['value'] === $value && isset($attributeValue['price'])) {
-                        $totalPrice += $attributeValue['price'];
-                    }
-                }
-            }
-        }
-        return $totalPrice;
-    }
+   // Calculate the price of the SKU based on the selected values
+   private function calculatePrice($combination)
+   {
+       // Step 1: Start with the base price
+       $subtotal = $this->options['basePrice'];
+   
+       // Step 2: Add the prices of selected attribute values
+       foreach ($combination as $value) {
+           foreach ($this->attributes as $attribute) {
+               foreach ($attribute['values'] as $attributeValue) {
+                   if ($attributeValue['value'] === $value && isset($attributeValue['price'])) {
+                       $subtotal += $attributeValue['price'];
+                   }
+               }
+           }
+       }
+   
+       // Step 3: Apply discount if enabled
+       $discount = 0;
+       if ($this->options['discount']) {
+           if ($this->options['discountType'] === 'percentage') {
+               $discount = ($this->options['discountAmount'] / 100) * $subtotal;
+           } else { // Fixed amount
+               $discount = $this->options['discountAmount'];
+           }
+       }
+   
+       // Step 4: Apply VAT if enabled
+       $vat = 0;
+       if ($this->options['vat']) {
+           if ($this->options['vatType'] === 'percentage') {
+               $vat = (($subtotal - $discount) * $this->options['vatAmount']) / 100;
+           } else { // Fixed amount
+               $vat = $this->options['vatAmount'];
+           }
+       }
+   
+       // Step 5: Calculate the final total price
+       $totalPrice = $subtotal - $discount + $vat;
+   
+       return [
+           'subtotal' => $subtotal,
+           'discount' => $discount,
+           'vat' => $vat,
+           'totalPrice' => $totalPrice
+       ];
+   }
+   
 
     // Get memory usage in MB
     public function getMemoryUsage()
@@ -205,21 +235,29 @@ if (!$file) {
 
 // Generate combinations and write to file
 $skuGenerator = new GenerateSku($attributes);
+
+// Write header
+$header = "SKU, Subtotal, Total Price, VAT, Discount, Memory Usage\n";
+fwrite($file, $header);
+
 foreach ($skuGenerator->generateCombinations($sets, $requiredSets) as $combination) {
-    $currentTime = date("Y-m-d H:i:s");
     $sku = $skuGenerator->options['uppercase'] ? strtoupper($combination[0]) : strtolower($combination[0]);
-    $price = $combination[1];
-    $memoryUsage = $skuGenerator->getMemoryUsage();
-    $logEntry = "$currentTime | $sku | Price: $price | $memoryUsage" . PHP_EOL;
+    $priceDetails = $combination[1];
 
+    $logEntry = sprintf(
+        "%s, %s, %s, %s, %s, %s\n",
+        $sku,
+        $priceDetails['subtotal'],
+        $priceDetails['totalPrice'],
+        $priceDetails['vat'],
+        $priceDetails['discount'],
+        $skuGenerator->getMemoryUsage()
+    );
     fwrite($file, $logEntry);
-
-    // Optional: Print to console for every 1000 combinations
-    static $count = 0;
-    if (++$count % 1000 === 0) {
-        echo $logEntry;
-    }
 }
+
+
+
 
 fclose($file);
 
