@@ -1,6 +1,6 @@
 <?php
 
-ini_set('memory_limit', '2000M');
+ini_set('memory_limit', '5000M');
 
 class GenerateSku
 {
@@ -44,7 +44,9 @@ class GenerateSku
                 foreach ($this->cartesianProduct($subset) as $combination) {
                     // Ensure required attributes are included in every combination
                     if ($this->containsRequiredAttributes($combination, $requiredSets)) {
-                        yield [ $this->options['prefixName'] . $this->options['separator'] . implode( $this->options['separator'], $combination)];
+                        // Calculate price of the combination
+                        $price = $this->calculatePrice($combination);
+                        yield [ $this->options['prefixName'] . $this->options['separator'] . implode( $this->options['separator'], $combination), $price];
                     }
                 }
             }
@@ -127,6 +129,53 @@ class GenerateSku
         return $result;
     }
 
+   // Calculate the price of the SKU based on the selected values
+   private function calculatePrice($combination)
+   {
+       // Step 1: Start with the base price
+       $subtotal = $this->options['basePrice'];
+   
+       // Step 2: Add the prices of selected attribute values
+       foreach ($combination as $value) {
+           foreach ($this->attributes as $attribute) {
+               foreach ($attribute['values'] as $attributeValue) {
+                   if ($attributeValue['value'] === $value && isset($attributeValue['price'])) {
+                       $subtotal += $attributeValue['price'];
+                   }
+               }
+           }
+       }
+   
+       // Step 3: Apply discount if enabled
+       $discount = 0;
+       if ($this->options['discount']) {
+           if ($this->options['discountType'] === 'percentage') {
+               $discount = ($this->options['discountAmount'] / 100) * $subtotal;
+           } else { // Fixed amount
+               $discount = $this->options['discountAmount'];
+           }
+       }
+   
+       // Step 4: Apply VAT if enabled
+       $vat = 0;
+       if ($this->options['vat']) {
+           if ($this->options['vatType'] === 'percentage') {
+               $vat = (($subtotal - $discount) * $this->options['vatAmount']) / 100;
+           } else { // Fixed amount
+               $vat = $this->options['vatAmount'];
+           }
+       }
+   
+       // Step 5: Calculate the final total price
+       $totalPrice = $subtotal - $discount + $vat;
+   
+       return [
+           'subtotal' => $subtotal,
+           'discount' => $discount,
+           'vat' => $vat,
+           'totalPrice' => $totalPrice
+       ];
+   }
    
 
     // Get memory usage in MB
@@ -290,7 +339,7 @@ foreach ($attributes as $attribute) {
 
 // File setup
 $timestamp = date("Ymd_His");
-$filename = "php-sku.txt";
+$filename = "php-sku-with-price.txt";
 $file = fopen($filename, 'w');
 
 if (!$file) {
@@ -306,10 +355,18 @@ fwrite($file, $header);
 
 foreach ($skuGenerator->generateCombinations($sets, $requiredSets) as $combination) {
     $sku = $skuGenerator->options['uppercase'] ? strtoupper($combination[0]) : strtolower($combination[0]);
+    $priceDetails = $combination[1];
+
     $logEntry = sprintf(
-        "%s %s\n",
+        "%s, %s, %s, %s, %s, %s\n",
         $sku,
-        $skuGenerator->getMemoryUsage());
+        $priceDetails['subtotal'],
+        $priceDetails['totalPrice'],
+        $priceDetails['vat'],
+        $priceDetails['discount'],
+        $skuGenerator->getMemoryUsage()
+    );
+
     echo $logEntry;
 
     fwrite($file, $logEntry);
