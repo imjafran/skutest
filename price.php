@@ -1,6 +1,6 @@
 <?php
 
-ini_set('memory_limit', '5000M');
+ini_set('memory_limit', '500M');
 
 class GenerateSku
 {
@@ -69,7 +69,7 @@ class GenerateSku
             }
         }
         return true; // All required attributes are found in the combination
-    }
+    } 
 
     // Generate all subsets of a given size
     private function getSubsets($sets, $size)
@@ -109,24 +109,20 @@ class GenerateSku
         }
     }
 
-    // Cartesian product of multiple arrays
+    // Optimize the `cartesianProduct` method
     private function cartesianProduct($arrays)
     {
         if (empty($arrays)) {
-            return [[]];
+            yield [];
+            return;
         }
 
-        $result = [[]];
-        foreach ($arrays as $array) {
-            $newResult = [];
-            foreach ($result as $product) {
-                foreach ($array as $item) {
-                    $newResult[] = array_merge($product, [$item]);
-                }
+        $firstArray = array_shift($arrays); // Take the first array
+        foreach ($firstArray as $value) {
+            foreach ($this->cartesianProduct($arrays) as $product) {
+                yield array_merge([$value], $product);
             }
-            $result = $newResult;
         }
-        return $result;
     }
 
    // Calculate the price of the SKU based on the selected values
@@ -181,7 +177,7 @@ class GenerateSku
     // Get memory usage in MB
     public function getMemoryUsage()
     {
-        return round(memory_get_peak_usage(true) / 1024 / 1024, 2) . " MB";
+        return round(memory_get_peak_usage(true) / 1024 / 1024, 2) . "MB";
     }
 }
 
@@ -339,7 +335,7 @@ foreach ($attributes as $attribute) {
 
 // File setup
 $timestamp = date("Ymd_His");
-$filename = "php-sku-with-price.txt";
+$filename = "output/php-price.txt";
 $file = fopen($filename, 'w');
 
 if (!$file) {
@@ -370,9 +366,12 @@ foreach ($skuGenerator->generateCombinations($sets, $requiredSets) as $combinati
     echo $logEntry;
 
     fwrite($file, $logEntry);
+
+    fflush($file); // Flush the file buffer
+
+    // Explicitly unset variables to free memory
+    unset($combination, $sku, $priceDetails, $logEntry);
 }
-
-
 
 
 fclose($file);
