@@ -135,61 +135,6 @@ class GenerateSku
 // Attribute sets (example data)
 $attributes = [
     [
-        "name" => "Size",
-        "enabled" => true,
-        "required" => true,
-        "values" => [
-            ["value" => "3030", "price" => "1320"],
-            ["value" => "3036", "price" => "1320"],
-            ["value" => "3048", "price" => "1430"],
-            ["value" => "3630", "price" => "1430"],
-            ["value" => "3636", "price" => "1430"],
-            ["value" => "3648", "price" => "1460"],
-            ["value" => "4230", "price" => "1485"],
-            ["value" => "4236", "price" => "1485"],
-            ["value" => "4248", "price" => "1570"],
-            ["value" => "4830", "price" => "1570"],
-            ["value" => "4836", "price" => "1570"],
-            ["value" => "4848", "price" => "1705"],
-            ["value" => "5430", "price" => "1705"],
-            ["value" => "5436", "price" => "1705"],
-            ["value" => "5448", "price" => "1815"],
-            ["value" => "6030", "price" => "1870"],
-            ["value" => "6036", "price" => "1870"],
-            ["value" => "6048", "price" => "1925"]
-        ],
-    ],
-    [
-        "name" => "Color",
-        "enabled" => true,
-        "required" => true,
-        "values" => [
-            ["value" => "Raw", "price" => 0],
-            ["value" => "AMW", "price" => "300"],
-            ["value" => "ANW", "price" => "200"],
-            ["value" => "BLK", "price" => "300"],
-            ["value" => "NAV", "price" => "300"],
-            ["value" => "CHO", "price" => "300"],
-            ["value" => "ESP", "price" => "300"],
-            ["value" => "GRY", "price" => "200"],
-            ["value" => "LGRY", "price" => "200"],
-            ["value" => "PRM", "price" => "100"],
-            ["value" => "SAD", "price" => "300"],
-            ["value" => "SGRY", "price" => "300"],
-            ["value" => "WHT", "price" => "200"]
-        ],
-    ],
-    [
-        "name" => "Trim",
-        "enabled" => true,
-        "required" => true,
-        "values" => [
-            ["value" => "CLT", "price" => 0],
-            ["value" => "FLT", "price" => 0],
-            ["value" => "BLT", "price" => 0]
-        ],
-    ],
-    [
         "name" => "Trim Install",
         "enabled" => true,
         "required" => true,
@@ -265,8 +210,6 @@ $attributes = [
     ]
 ];
 
-
-
 // Extract enabled attributes and their values
 $sets = [];
 $requiredSets = [];
@@ -285,11 +228,11 @@ foreach ($attributes as $attribute) {
 }
 
 // File setup
-$timestamp = date("Ymd_His");
-$filename = "output/php-sku.txt";
-$file = fopen($filename, 'w');
 
-if (!$file) {
+$json_file = fopen("output/php-sku.json", 'w');
+$csv_file = fopen("output/php-sku.csv", 'w');
+
+if (!$json_file || !$csv_file) {
     die("Unable to create output file.\n");
 }
 
@@ -297,27 +240,39 @@ if (!$file) {
 $skuGenerator = new GenerateSku($attributes);
 
 // Write header
-$header = "SKU, Subtotal, Total Price, VAT, Discount, Memory Usage\n";
-fwrite($file, $header);
+// $header = "SKU, Subtotal, Total Price, VAT, Discount, Memory Usage\n";
+
+fwrite($json_file, '[');
+fwrite($csv_file, "SKU, Memory Usage\n");
 
 foreach ($skuGenerator->generateCombinations($sets, $requiredSets) as $combination) {
     $sku = $skuGenerator->options['uppercase'] ? strtoupper($combination[0]) : strtolower($combination[0]);
-    $logEntry = sprintf(
-        "%s %s\n",
-        $sku,
-        $skuGenerator->getMemoryUsage());
-    echo $logEntry;
+   
+    $memory_usage = $skuGenerator->getMemoryUsage();
 
-    fwrite($file, $logEntry);
+    // Write in JSON format
+    $json_object = json_encode([
+        'SKU' => $sku,
+        'Memory Usage' => $memory_usage
+    ]) . ",\n";
+    fwrite($json_file, $json_object);
+    fflush($json_file); // Flush the file buffer
 
-    fflush($file); // Flush the file buffer
+    // Write in CSV format
+    $csv_object = $sku . ',' . $memory_usage . "\n";
+    fwrite($csv_file, $csv_object);
+    fflush($csv_file); // Flush the file buffer
+
     // Explicitly unset variables to free memory
-    unset($combination, $sku, $logEntry);
+    unset($sku, $memory_usage, $json_object, $csv_object, $combination);
 }
 
+// Truncate the trailing comma and newline
+fseek($json_file, -2, SEEK_END); // Move back 2 characters to overwrite ",\n"
+fwrite($json_file, "]");
+fflush($json_file);
 
+fclose($json_file);
+fclose($csv_file);
 
-
-fclose($file);
-
-echo "Combinations written to $filename\n";
+echo "Combinations written\n";

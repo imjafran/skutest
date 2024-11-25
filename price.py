@@ -354,62 +354,62 @@ attributes = [
             ],
             "edit": 0
         },
-        # {
-        #     "name": "Chimney Extension",
-        #     "enabled": True,
-        #     "required": True,
-        #     "values": [
-        #         {
-        #             "value": "NET",
-        #             "price": 0
-        #         },
-        #         {
-        #             "value": "6ET",
-        #             "price": "245"
-        #         },
-        #         {
-        #             "value": "12ET",
-        #             "price": "308"
-        #         },
-        #         {
-        #             "value": "24ET",
-        #             "price": "350"
-        #         }
-        #     ],
-        #     "edit": 0
-        # },
-        # {
-        #     "name": "Solid Bottom",
-        #     "enabled": True,
-        #     "required": True,
-        #     "values": [
-        #         {
-        #             "value": "NSB",
-        #             "price": 0
-        #         },
-        #         {
-        #             "value": "YSB",
-        #             "price": "280"
-        #         }
-        #     ],
-        #     "edit": 0
-        # },
-        # {
-        #     "name": "Rushed",
-        #     "enabled": True,
-        #     "required": True,
-        #     "values": [
-        #         {
-        #             "value": "NRSH",
-        #             "price": 0
-        #         },
-        #         {
-        #             "value": "RSH",
-        #             "price": "350"
-        #         }
-        #     ],
-        #     "edit": 0
-        # }
+        {
+            "name": "Chimney Extension",
+            "enabled": True,
+            "required": True,
+            "values": [
+                {
+                    "value": "NET",
+                    "price": 0
+                },
+                {
+                    "value": "6ET",
+                    "price": "245"
+                },
+                {
+                    "value": "12ET",
+                    "price": "308"
+                },
+                {
+                    "value": "24ET",
+                    "price": "350"
+                }
+            ],
+            "edit": 0
+        },
+        {
+            "name": "Solid Bottom",
+            "enabled": True,
+            "required": True,
+            "values": [
+                {
+                    "value": "NSB",
+                    "price": 0
+                },
+                {
+                    "value": "YSB",
+                    "price": "280"
+                }
+            ],
+            "edit": 0
+        },
+        {
+            "name": "Rushed",
+            "enabled": True,
+            "required": True,
+            "values": [
+                {
+                    "value": "NRSH",
+                    "price": 0
+                },
+                {
+                    "value": "RSH",
+                    "price": "350"
+                }
+            ],
+            "edit": 0
+        }
     ]
 
 # Prepare sets and required_sets

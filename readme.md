@@ -69,7 +69,4 @@
 ## License
 
 This project is licensed under the MIT License.
-"""
-
-with open("readme.md", "w") as file:
-    file.write(readme_content)
+ 
